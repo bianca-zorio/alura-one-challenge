@@ -1,0 +1,18 @@
+# Servicio systemd para ejecutar el Alura Agente de forma permanente.
+# Copiar a: /etc/systemd/system/alura-agente.service
+# (ajusta las rutas si tu usuario no es "ubuntu")
+
+[Unit]
+Description=Alura Agente (FastAPI + Gemini)
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/alura-one-challenge
+EnvironmentFile=/home/ubuntu/alura-one-challenge/.env
+ExecStart=/home/ubuntu/alura-one-challenge/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

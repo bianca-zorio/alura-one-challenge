@@ -176,18 +176,17 @@ Abre **http://localhost:8000** y empieza a preguntar. 🎉
 
 ## ☁️ Deploy en Oracle Cloud (OCI)
 
-La aplicación se despliega en una instancia **OCI Compute** (capa *Always Free*).
+La aplicación se despliega en una instancia **OCI Compute** (capa *Always Free*),
+con **nginx** como proxy inverso y **HTTPS** gratuito (Let's Encrypt).
 
-**Pasos resumidos:**
-1. Crear una VM en OCI (se recomienda la forma **Ampere A1** — ARM, con RAM
-   suficiente para el modelo de embeddings) con Ubuntu.
-2. Abrir el puerto de la aplicación en la *Security List* / *NSG*.
-3. Instalar dependencias, clonar el repositorio y crear el `.env` con la clave.
-4. Construir el índice y levantar el servidor:
-   ```bash
-   python -m app.ingest
-   uvicorn app.main:app --host 0.0.0.0 --port 8000
-   ```
+```
+Internet → https://tu-dominio → [nginx en la VM] → [FastAPI en 127.0.0.1:8000]
+```
+
+👉 **Guía completa paso a paso:** [DEPLOY.md](DEPLOY.md)
+(crear la VM, abrir puertos, servicio systemd, nginx y certificado HTTPS).
+
+Los archivos de configuración listos para usar están en [`deploy/`](deploy/).
 
 **Evidencia del deploy:**
 - 🔗 Enlace público: _(se completará tras el despliegue)_
