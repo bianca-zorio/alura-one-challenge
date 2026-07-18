@@ -1,0 +1,17 @@
+# Núcleo del agente
+anthropic>=0.40.0          # SDK oficial de Claude (Anthropic)
+
+# API web
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+jinja2>=3.1.0
+python-dotenv>=1.0.0
+
+# Lectura y procesamiento de documentos
+pypdf>=4.0.0               # Lee los PDF
+pandas>=2.0.0              # Lee el inventario en Excel
+openpyxl>=3.1.0            # Motor de Excel para pandas
+
+# RAG (búsqueda semántica)
+fastembed>=0.3.0           # Embeddings multilingües en local (ONNX, sin PyTorch)
+numpy>=1.26.0              # Búsqueda por similitud del coseno

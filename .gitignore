@@ -1,0 +1,23 @@
+# Entorno y secretos
+.venv/
+venv/
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Índice generado (se reconstruye con: python -m app.ingest)
+data/index/
+
+# Modelos de embeddings descargados por fastembed
+.fastembed_cache/
+local_cache/
+
+# Sistema
+.DS_Store
+Thumbs.db
