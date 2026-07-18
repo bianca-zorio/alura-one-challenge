@@ -17,9 +17,9 @@ INVENTORY_FILE = DOCS_DIR / "inventario_supermercado.xlsx"
 # --- Modelo de embeddings (local, multilingüe, sin PyTorch) ---
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
-# --- Claude (Anthropic) ---
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-opus-4-8")
+# --- Google Gemini ---
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.5-flash")
 
 # --- Parámetros de RAG ---
 CHUNK_SIZE = 900          # caracteres por fragmento

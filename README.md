@@ -34,7 +34,7 @@ usar para fundamentar su respuesta.
                                 │
                                 ▼
                 ┌───────────────────────────────┐
-                │   Claude (Anthropic API)       │
+                │   Google Gemini (API)          │
                 │   — decide qué herramienta usar │
                 └───────────────┬───────────────┘
                     │                       │
@@ -79,7 +79,7 @@ precisión preguntas de datos como "el producto más caro" o "el de mayor stock"
 | Componente | Herramienta | Motivo |
 |---|---|---|
 | Lenguaje | **Python 3.12** | Ecosistema de IA |
-| Modelo de lenguaje (LLM) | **Claude — Anthropic API** (`claude-opus-4-8`) | Motor del agente y las respuestas |
+| Modelo de lenguaje (LLM) | **Google Gemini** (`gemini-2.5-flash`) | Motor del agente y las respuestas |
 | Lectura de PDF | **PyPDF** | Extraer texto de los documentos |
 | Lectura de Excel | **Pandas + openpyxl** | Consultar el inventario |
 | Embeddings | **FastEmbed** (`paraphrase-multilingual-MiniLM-L12-v2`) | Búsqueda semántica **local y gratuita**, en español |
@@ -87,8 +87,8 @@ precisión preguntas de datos como "el producto más caro" o "el de mayor stock"
 | Backend / Web | **FastAPI + Uvicorn** | API `/chat` y página de chat |
 | Deploy | **Oracle Cloud Infrastructure (OCI Compute)** | Aplicación pública en la nube |
 
-> Solo requiere **una** clave de pago (Anthropic). Los *embeddings* corren en local,
-> por lo que la búsqueda semántica no tiene costo.
+> Usa la **API gratuita** de Google Gemini y *embeddings* que corren en local, por
+> lo que el proyecto funciona **sin costo**.
 
 ---
 
@@ -101,7 +101,7 @@ alura-one-challenge/
 │   ├── ingest.py        # Lee PDF y construye el índice de embeddings
 │   ├── retriever.py     # Búsqueda semántica (RAG)
 │   ├── inventory.py     # Consultas sobre el inventario (Excel)
-│   ├── agent.py         # Agente Claude con 2 herramientas
+│   ├── agent.py         # Agente Gemini con 2 herramientas
 │   ├── main.py          # API FastAPI + página de chat
 │   └── templates/
 │       └── index.html   # Interfaz de chat
@@ -118,7 +118,7 @@ alura-one-challenge/
 
 ### 1. Requisitos
 - Python 3.10 o superior
-- Una clave de la API de Anthropic → [console.anthropic.com](https://console.anthropic.com)
+- Una clave gratuita de Google Gemini → [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
 
 ### 2. Instalación
 ```bash
@@ -135,7 +135,7 @@ pip install -r requirements.txt
 ### 3. Configurar la clave
 ```bash
 cp .env.example .env
-# Edita .env y coloca tu ANTHROPIC_API_KEY
+# Edita .env y coloca tu GOOGLE_API_KEY
 ```
 
 ### 4. Construir el índice (una sola vez)
