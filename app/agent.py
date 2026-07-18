@@ -4,11 +4,14 @@ preguntas sobre Mercado Central 24h.
   1. buscar_en_documentos  -> RAG semántico sobre los PDF (políticas, FAQ, etc.)
   2. consultar_inventario  -> consultas estructuradas sobre el Excel de productos
 
-Gemini decide qué herramienta usar según la pregunta. Usamos la "llamada
-automática de funciones": el SDK ejecuta nuestras funciones cuando el modelo
-las pide y repite hasta obtener la respuesta final.
+Implementa un "bucle de herramientas" manual: Gemini pide una herramienta,
+nosotros la ejecutamos y le devolvemos el resultado; se repite hasta que redacta
+la respuesta. En la última ronda se le quitan las herramientas para forzar el
+cierre y garantizar siempre una respuesta.
 """
 from __future__ import annotations
+
+import time
 
 from google import genai
 from google.genai import errors as genai_errors
@@ -26,10 +29,77 @@ Reglas:
 - Usa las herramientas disponibles para fundamentar tus respuestas:
     * "buscar_en_documentos" para políticas, FAQ, reglamento interno y proveedores.
     * "consultar_inventario" para preguntas sobre productos, stock, precios y marcas.
+- Para preguntas de "el que más/menos ..." (mayor stock, más caro, etc.), usa \
+"consultar_inventario" con el parámetro "ordenar_por".
+- Normalmente basta con UNA o DOS llamadas a las herramientas. En cuanto tengas \
+información suficiente, redacta la respuesta.
 - No inventes datos. Si la información no está en los documentos ni en el \
 inventario, dilo con honestidad.
 - Cuando uses datos del inventario o citas de un documento, menciónalo brevemente.
 """
+
+# Declaración de las herramientas que Gemini puede pedir (nombre, descripción y
+# parámetros). Es el "contrato" que el modelo lee para saber cómo llamarlas.
+HERRAMIENTAS = types.Tool(
+    function_declarations=[
+        types.FunctionDeclaration(
+            name="buscar_en_documentos",
+            description=(
+                "Busca información en los documentos internos de Mercado Central 24h: "
+                "políticas, preguntas frecuentes, reglamento interno y manual de "
+                "proveedores. Úsala para normas, devoluciones, atención al cliente, "
+                "horarios, procedimientos o condiciones de compra."
+            ),
+            parameters=types.Schema(
+                type=types.Type.OBJECT,
+                properties={
+                    "consulta": types.Schema(
+                        type=types.Type.STRING,
+                        description="La pregunta o tema a buscar en los documentos.",
+                    )
+                },
+                required=["consulta"],
+            ),
+        ),
+        types.FunctionDeclaration(
+            name="consultar_inventario",
+            description=(
+                "Consulta el inventario de 200 productos del supermercado. Úsala para "
+                "stock, precios, marcas, categorías, proveedores o vencimientos. "
+                "Permite filtrar, buscar y ordenar."
+            ),
+            parameters=types.Schema(
+                type=types.Type.OBJECT,
+                properties={
+                    "busqueda": types.Schema(type=types.Type.STRING, description="Texto a buscar en descripción, marca o categoría."),
+                    "categoria": types.Schema(type=types.Type.STRING, description="Filtra por categoría (ej. Abarrotes, Bebidas)."),
+                    "marca": types.Schema(type=types.Type.STRING, description="Filtra por marca."),
+                    "proveedor": types.Schema(type=types.Type.STRING, description="Filtra por proveedor principal."),
+                    "ordenar_por": types.Schema(
+                        type=types.Type.STRING,
+                        enum=["stock_actual", "precio", "costo", "vencimiento", "stock_minimo"],
+                        description="Columna por la que ordenar los resultados.",
+                    ),
+                    "orden": types.Schema(type=types.Type.STRING, enum=["asc", "desc"], description="asc (menor a mayor) o desc (mayor a menor)."),
+                    "limite": types.Schema(type=types.Type.INTEGER, description="Cantidad de productos a devolver (1-25)."),
+                },
+            ),
+        ),
+    ]
+)
+
+MAX_RONDAS = 4  # rondas de conversación con el modelo (incluye la de cierre)
+
+
+def _segundos_de_espera(error: genai_errors.ClientError) -> float:
+    """Lee cuántos segundos pide esperar Gemini en un error 429 (por defecto 20)."""
+    try:
+        for d in (error.details or {}).get("error", {}).get("details", []):
+            if "retryDelay" in d:
+                return min(float(str(d["retryDelay"]).rstrip("s")) + 1, 35)
+    except (ValueError, AttributeError):
+        pass
+    return 20.0
 
 
 class Agente:
@@ -42,83 +112,97 @@ class Agente:
         self.cliente = genai.Client(api_key=config.GOOGLE_API_KEY)
         self.recuperador = Recuperador()
 
-    def responder(self, pregunta: str) -> dict:
-        """Devuelve {'respuesta': str, 'fuentes': list[str]} para una pregunta."""
-        fuentes: set[str] = set()
-
-        # Las herramientas son funciones locales que "recuerdan" las fuentes
-        # usadas (guardándolas en el conjunto 'fuentes').
-        def buscar_en_documentos(consulta: str) -> str:
-            """Busca información en los documentos internos de Mercado Central 24h:
-            políticas, preguntas frecuentes, reglamento interno y manual de
-            proveedores. Úsala para preguntas sobre normas, devoluciones, atención
-            al cliente, horarios, procedimientos o condiciones de compra.
-
-            Args:
-                consulta: La pregunta o tema a buscar en los documentos.
-            """
-            resultados = self.recuperador.buscar(consulta)
+    def _ejecutar(self, nombre: str, args: dict, fuentes: set[str]) -> str:
+        """Ejecuta la herramienta pedida por Gemini y devuelve su resultado."""
+        if nombre == "buscar_en_documentos":
+            resultados = self.recuperador.buscar(args.get("consulta", ""))
             for r in resultados:
                 fuentes.add(r["fuente"])
             return "\n\n---\n\n".join(
                 f"[Fuente: {r['fuente']}]\n{r['texto']}" for r in resultados
             )
-
-        def consultar_inventario(
-            busqueda: str = "",
-            categoria: str = "",
-            marca: str = "",
-            proveedor: str = "",
-            ordenar_por: str = "",
-            orden: str = "desc",
-            limite: int = 5,
-        ) -> str:
-            """Consulta el inventario de productos del supermercado (200 productos).
-            Úsala para preguntas sobre stock, precios, marcas, categorías,
-            proveedores o vencimientos.
-
-            Args:
-                busqueda: Texto a buscar en descripción, marca o categoría.
-                categoria: Filtra por categoría (por ejemplo "Abarrotes").
-                marca: Filtra por marca.
-                proveedor: Filtra por proveedor principal.
-                ordenar_por: Columna para ordenar. Valores válidos: "stock_actual",
-                    "precio", "costo", "vencimiento", "stock_minimo".
-                orden: "asc" (menor a mayor) o "desc" (mayor a menor).
-                limite: Cantidad de productos a devolver (1 a 25).
-            """
+        if nombre == "consultar_inventario":
             fuentes.add("inventario_supermercado.xlsx")
             return inventory.consultar(
-                busqueda=busqueda or None,
-                categoria=categoria or None,
-                marca=marca or None,
-                proveedor=proveedor or None,
-                ordenar_por=ordenar_por or None,
-                orden=orden,
-                limite=limite,
+                busqueda=args.get("busqueda") or None,
+                categoria=args.get("categoria") or None,
+                marca=args.get("marca") or None,
+                proveedor=args.get("proveedor") or None,
+                ordenar_por=args.get("ordenar_por") or None,
+                orden=args.get("orden") or "desc",
+                limite=int(args.get("limite") or 5),
             )
+        return f"Herramienta desconocida: {nombre}"
 
-        try:
-            respuesta = self.cliente.models.generate_content(
-                model=config.GOOGLE_MODEL,
-                contents=pregunta,
-                config=types.GenerateContentConfig(
-                    system_instruction=SYSTEM_PROMPT,
-                    tools=[buscar_en_documentos, consultar_inventario],
-                ),
-            )
-        except genai_errors.ClientError as e:
-            if e.code == 429:
-                return {
-                    "respuesta": (
-                        "El servicio está recibiendo muchas preguntas por minuto "
-                        "(límite gratuito de Gemini). Espera unos segundos e inténtalo de nuevo."
-                    ),
-                    "fuentes": sorted(fuentes),
-                }
-            raise
+    def _generar(self, contents: list, cfg: types.GenerateContentConfig):
+        """Llama a Gemini reintentando si responde 429 (límite de peticiones)."""
+        for intento in range(3):
+            try:
+                return self.cliente.models.generate_content(
+                    model=config.GOOGLE_MODEL, contents=contents, config=cfg
+                )
+            except genai_errors.ClientError as e:
+                if e.code != 429 or intento == 2:
+                    raise
+                time.sleep(_segundos_de_espera(e))
 
+    def _redactar_final(self, pregunta: str, contexto: list[str], fuentes: set[str]) -> dict:
+        """Cierre limpio: sin herramientas ni historial de llamadas, solo la
+        pregunta y la información ya recopilada. Garantiza una respuesta en texto."""
+        prompt = (
+            f"Pregunta: {pregunta}\n\n"
+            "Información recopilada de las herramientas:\n"
+            + "\n\n".join(contexto)
+            + "\n\nCon esa información, responde la pregunta de forma clara y directa. "
+            "Si no es suficiente, dilo con honestidad."
+        )
+        respuesta = self._generar(
+            [types.Content(role="user", parts=[types.Part(text=prompt)])],
+            types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT),
+        )
         texto = (respuesta.text or "").strip()
-        if not texto:
-            texto = "No pude generar una respuesta. Intenta reformular la pregunta."
-        return {"respuesta": texto, "fuentes": sorted(fuentes)}
+        return {
+            "respuesta": texto or "No encontré esa información en los documentos.",
+            "fuentes": sorted(fuentes),
+        }
+
+    def responder(self, pregunta: str) -> dict:
+        """Devuelve {'respuesta': str, 'fuentes': list[str]} para una pregunta."""
+        fuentes: set[str] = set()
+        contexto: list[str] = []  # resultados acumulados de las herramientas
+        contents: list = [types.Content(role="user", parts=[types.Part(text=pregunta)])]
+        cfg_tools = types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT, tools=[HERRAMIENTAS]
+        )
+
+        for _ in range(MAX_RONDAS):
+            respuesta = self._generar(contents, cfg_tools)
+            partes = respuesta.candidates[0].content.parts or []
+            llamadas = [p.function_call for p in partes if getattr(p, "function_call", None)]
+
+            if not llamadas:  # el modelo respondió con texto: terminamos
+                texto = (respuesta.text or "").strip()
+                if texto:
+                    return {"respuesta": texto, "fuentes": sorted(fuentes)}
+                break
+
+            # Ejecutamos cada herramienta pedida y guardamos su resultado.
+            contents.append(respuesta.candidates[0].content)
+            resultados = []
+            for llamada in llamadas:
+                salida = self._ejecutar(llamada.name, dict(llamada.args or {}), fuentes)
+                contexto.append(salida)
+                resultados.append(
+                    types.Part.from_function_response(
+                        name=llamada.name, response={"result": salida}
+                    )
+                )
+            contents.append(types.Content(role="user", parts=resultados))
+
+        # Si el modelo no cerró por su cuenta, forzamos la redacción final.
+        if contexto:
+            return self._redactar_final(pregunta, contexto, fuentes)
+        return {
+            "respuesta": "No pude completar la respuesta. Intenta reformular la pregunta.",
+            "fuentes": sorted(fuentes),
+        }
