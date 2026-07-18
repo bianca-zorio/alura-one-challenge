@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alura Agente — Mercado Central 24h</title>
+  <style>
+    :root { --azul:#1a4b8c; --gris:#f4f5f7; --borde:#e0e3e8; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+           background:var(--gris); color:#1c1e21; }
+    header { background:var(--azul); color:#fff; padding:18px 20px; }
+    header h1 { margin:0; font-size:1.2rem; }
+    header p { margin:4px 0 0; font-size:.85rem; opacity:.85; }
+    main { max-width:720px; margin:0 auto; padding:16px; }
+    #chat { display:flex; flex-direction:column; gap:12px; min-height:52vh; padding:8px 0; }
+    .msg { padding:10px 14px; border-radius:12px; max-width:85%; line-height:1.45;
+           white-space:pre-wrap; word-wrap:break-word; }
+    .user { align-self:flex-end; background:var(--azul); color:#fff; border-bottom-right-radius:2px; }
+    .bot  { align-self:flex-start; background:#fff; border:1px solid var(--borde); border-bottom-left-radius:2px; }
+    .fuentes { font-size:.72rem; color:#65676b; margin-top:6px; }
+    form { display:flex; gap:8px; margin-top:8px; }
+    input { flex:1; padding:12px 14px; border:1px solid var(--borde); border-radius:10px; font-size:1rem; }
+    button { padding:12px 18px; border:0; border-radius:10px; background:var(--azul); color:#fff;
+             font-size:1rem; cursor:pointer; }
+    button:disabled { opacity:.5; cursor:default; }
+    .ejemplos { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+    .ejemplos button { background:#fff; color:var(--azul); border:1px solid var(--borde);
+                       font-size:.8rem; padding:6px 10px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🛒 Alura Agente — Mercado Central 24h</h1>
+    <p>Pregunta sobre políticas, inventario, proveedores o atención al cliente.</p>
+  </header>
+  <main>
+    <div class="ejemplos" id="ejemplos">
+      <button>¿Cuál es el producto con más stock?</button>
+      <button>¿Cómo funciona la política de devoluciones?</button>
+      <button>¿Qué productos hay de la categoría Abarrotes?</button>
+      <button>¿El supermercado atiende 24 horas?</button>
+    </div>
+    <div id="chat"></div>
+    <form id="form">
+      <input id="entrada" autocomplete="off" placeholder="Escribe tu pregunta..." required />
+      <button id="enviar" type="submit">Enviar</button>
+    </form>
+  </main>
+
+  <script>
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("form");
+    const entrada = document.getElementById("entrada");
+    const boton = document.getElementById("enviar");
+
+    function burbuja(texto, clase, fuentes) {
+      const div = document.createElement("div");
+      div.className = "msg " + clase;
+      div.textContent = texto;
+      if (fuentes && fuentes.length) {
+        const f = document.createElement("div");
+        f.className = "fuentes";
+        f.textContent = "📄 Fuentes: " + fuentes.join(", ");
+        div.appendChild(f);
+      }
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      return div;
+    }
+
+    async function preguntar(texto) {
+      burbuja(texto, "user");
+      entrada.value = "";
+      boton.disabled = true;
+      const pensando = burbuja("Pensando…", "bot");
+      try {
+        const r = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pregunta: texto }),
+        });
+        const data = await r.json();
+        pensando.remove();
+        burbuja(data.respuesta || "Sin respuesta.", "bot", data.fuentes);
+      } catch (e) {
+        pensando.remove();
+        burbuja("Ocurrió un error al consultar el agente.", "bot");
+      } finally {
+        boton.disabled = false;
+        entrada.focus();
+      }
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const t = entrada.value.trim();
+      if (t) preguntar(t);
+    });
+    document.getElementById("ejemplos").addEventListener("click", (e) => {
+      if (e.target.tagName === "BUTTON") preguntar(e.target.textContent);
+    });
+  </script>
+</body>
+</html>
