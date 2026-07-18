@@ -79,7 +79,7 @@ precisión preguntas de datos como "el producto más caro" o "el de mayor stock"
 | Componente | Herramienta | Motivo |
 |---|---|---|
 | Lenguaje | **Python 3.12** | Ecosistema de IA |
-| Modelo de lenguaje (LLM) | **Google Gemini** (`gemini-2.5-flash`) | Motor del agente y las respuestas |
+| Modelo de lenguaje (LLM) | **Google Gemini** (`gemini-flash-latest`) | Motor del agente y las respuestas |
 | Lectura de PDF | **PyPDF** | Extraer texto de los documentos |
 | Lectura de Excel | **Pandas + openpyxl** | Consultar el inventario |
 | Embeddings | **FastEmbed** (`paraphrase-multilingual-MiniLM-L12-v2`) | Búsqueda semántica **local y gratuita**, en español |

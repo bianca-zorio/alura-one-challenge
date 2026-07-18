@@ -11,6 +11,7 @@ las pide y repite hasta obtener la respuesta final.
 from __future__ import annotations
 
 from google import genai
+from google.genai import errors as genai_errors
 from google.genai import types
 
 from app import config, inventory
@@ -97,14 +98,25 @@ class Agente:
                 limite=limite,
             )
 
-        respuesta = self.cliente.models.generate_content(
-            model=config.GOOGLE_MODEL,
-            contents=pregunta,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                tools=[buscar_en_documentos, consultar_inventario],
-            ),
-        )
+        try:
+            respuesta = self.cliente.models.generate_content(
+                model=config.GOOGLE_MODEL,
+                contents=pregunta,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    tools=[buscar_en_documentos, consultar_inventario],
+                ),
+            )
+        except genai_errors.ClientError as e:
+            if e.code == 429:
+                return {
+                    "respuesta": (
+                        "El servicio está recibiendo muchas preguntas por minuto "
+                        "(límite gratuito de Gemini). Espera unos segundos e inténtalo de nuevo."
+                    ),
+                    "fuentes": sorted(fuentes),
+                }
+            raise
 
         texto = (respuesta.text or "").strip()
         if not texto:

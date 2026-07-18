@@ -19,7 +19,7 @@ EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 # --- Google Gemini ---
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.5-flash")
+GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-flash-latest")
 
 # --- Parámetros de RAG ---
 CHUNK_SIZE = 900          # caracteres por fragmento
