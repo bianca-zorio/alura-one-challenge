@@ -13,5 +13,6 @@ pandas>=2.0.0              # Lee el inventario en Excel
 openpyxl>=3.1.0            # Motor de Excel para pandas
 
 # RAG (búsqueda semántica)
-fastembed>=0.3.0           # Embeddings multilingües en local (ONNX, sin PyTorch)
 numpy>=1.26.0              # Búsqueda por similitud del coseno
+# Los embeddings se generan con la API de Gemini (google-genai, ya listado arriba),
+# así el servidor no necesita cargar un modelo pesado en memoria.

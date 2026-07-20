@@ -8,10 +8,10 @@ from __future__ import annotations
 import json
 
 import numpy as np
-from fastembed import TextEmbedding
 from pypdf import PdfReader
 
 from app import config
+from app.embeddings import embed
 
 
 def _leer_pdf(ruta) -> str:
@@ -51,10 +51,10 @@ def construir_indice() -> None:
             chunks.append({"fuente": pdf.name, "texto": fragmento})
 
     print(f"Total de fragmentos: {len(chunks)}")
-    print(f"Generando embeddings con {config.EMBEDDING_MODEL} ...")
+    print(f"Generando embeddings con {config.EMBEDDING_MODEL} (API de Gemini) ...")
 
-    modelo = TextEmbedding(model_name=config.EMBEDDING_MODEL)
-    vectores = np.array(list(modelo.embed([c["texto"] for c in chunks])), dtype=np.float32)
+    crudos = embed([c["texto"] for c in chunks], task_type="RETRIEVAL_DOCUMENT")
+    vectores = np.array(crudos, dtype=np.float32)
     # Normaliza para poder usar producto punto como similitud del coseno.
     vectores /= np.linalg.norm(vectores, axis=1, keepdims=True) + 1e-10
 

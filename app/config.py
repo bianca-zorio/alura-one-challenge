@@ -14,8 +14,8 @@ EMBEDDINGS_PATH = INDEX_DIR / "embeddings.npy"
 CHUNKS_PATH = INDEX_DIR / "chunks.json"
 INVENTORY_FILE = DOCS_DIR / "inventario_supermercado.xlsx"
 
-# --- Modelo de embeddings (local, multilingüe, sin PyTorch) ---
-EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+# --- Modelo de embeddings (API de Gemini, multilingüe) ---
+EMBEDDING_MODEL = "gemini-embedding-001"
 
 # --- Google Gemini ---
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")

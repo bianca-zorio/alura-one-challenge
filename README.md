@@ -45,7 +45,8 @@ usar para fundamentar su respuesta.
                     │                       │
         ┌───────────▼──────────┐   ┌────────▼─────────────┐
         │ Índice de embeddings │   │  inventario .xlsx    │
-        │  (FastEmbed + NumPy) │   │  (200 productos)     │
+        │ (Gemini embeddings + │   │  (200 productos)     │
+        │       NumPy)         │   │                      │
         │  ← 4 PDF fragmentados │   │                      │
         └──────────────────────┘   └──────────────────────┘
                     │
@@ -62,7 +63,7 @@ usar para fundamentar su respuesta.
 ### ¿Cómo funciona el RAG?
 1. **Ingesta**: los 4 PDF se leen con *PyPDF*, se dividen en fragmentos (~900
    caracteres con solapamiento) y se convierten en vectores (*embeddings*) con un
-   modelo multilingüe local.
+   la API de embeddings de Gemini (multilingüe).
 2. **Búsqueda**: la pregunta se convierte en un vector y se comparan por
    **similitud del coseno** con los fragmentos para recuperar los más relevantes.
 3. **Generación**: Claude recibe esos fragmentos como contexto y redacta la
@@ -82,13 +83,14 @@ precisión preguntas de datos como "el producto más caro" o "el de mayor stock"
 | Modelo de lenguaje (LLM) | **Google Gemini** (`gemini-flash-latest`) | Motor del agente y las respuestas |
 | Lectura de PDF | **PyPDF** | Extraer texto de los documentos |
 | Lectura de Excel | **Pandas + openpyxl** | Consultar el inventario |
-| Embeddings | **FastEmbed** (`paraphrase-multilingual-MiniLM-L12-v2`) | Búsqueda semántica **local y gratuita**, en español |
+| Embeddings | **Gemini** (`gemini-embedding-001`) | Búsqueda semántica multilingüe vía API (ligero para servidores pequeños) |
 | Búsqueda vectorial | **NumPy** (similitud del coseno) | Ligera, sin dependencias pesadas |
 | Backend / Web | **FastAPI + Uvicorn** | API `/chat` y página de chat |
 | Deploy | **Oracle Cloud Infrastructure (OCI Compute)** | Aplicación pública en la nube |
 
-> Usa la **API gratuita** de Google Gemini y *embeddings* que corren en local, por
-> lo que el proyecto funciona **sin costo**.
+> Usa la **API gratuita** de Google Gemini tanto para el modelo de lenguaje como
+> para los *embeddings*, por lo que el proyecto funciona **sin costo** y es ligero
+> de desplegar (no descarga modelos pesados).
 
 ---
 
