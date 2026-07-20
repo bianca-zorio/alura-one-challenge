@@ -11,12 +11,8 @@ __pycache__/
 *.pyo
 .pytest_cache/
 
-# Índice generado (se reconstruye con: python -m app.ingest)
-data/index/
-
-# Modelos de embeddings descargados por fastembed
-.fastembed_cache/
-local_cache/
+# Nota: el índice (data/index/) SÍ se versiona, para que el despliegue no
+# tenga que reconstruirlo. Se regenera con: python -m app.ingest
 
 # Sistema
 .DS_Store

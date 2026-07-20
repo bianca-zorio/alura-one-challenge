@@ -1,0 +1,16 @@
+# Plano de despliegue para Render.com (https://render.com)
+# Render lee este archivo y crea el servicio web automáticamente.
+services:
+  - type: web
+    name: alura-agente
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: GOOGLE_API_KEY      # se pega en el panel de Render (secreto, no va en el repo)
+        sync: false
+      - key: GOOGLE_MODEL
+        value: gemini-flash-latest
+      - key: PYTHON_VERSION
+        value: "3.12"
