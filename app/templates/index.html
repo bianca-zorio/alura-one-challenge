@@ -43,13 +43,17 @@
   .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
   .glass-effect { background: rgba(255,255,255,0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.3); }
   .glass-sidebar { background: rgba(250,245,255,0.5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-right: 1px solid rgba(255,255,255,0.3); }
-  .chat-container::-webkit-scrollbar { width: 4px; }
-  .chat-container::-webkit-scrollbar-thumb { background-color: #f3e8ff; border-radius: 10px; }
+  .chat-container::-webkit-scrollbar, .panel-scroll::-webkit-scrollbar { width: 4px; }
+  .chat-container::-webkit-scrollbar-thumb, .panel-scroll::-webkit-scrollbar-thumb { background-color: #f3e8ff; border-radius: 10px; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .gradient-pill { background: linear-gradient(to right, #9333ea, #db2777); transition: opacity .2s; }
   .gradient-pill:hover { opacity: .9; }
   .user-bubble { background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%); color: #6b21a8; }
-  /* Render del markdown que devuelve el agente */
+  /* Navegación lateral */
+  .nav-item { color: #7c757e; }
+  .nav-item:hover { background: rgba(255,255,255,0.4); }
+  .nav-activo { background: rgba(255,255,255,0.85); color: #9333ea; box-shadow: 0 1px 3px rgba(147,51,234,.08); }
+  /* Render del markdown del agente */
   .ai-content h3 { font-weight:600; color:#9333ea; margin:.9rem 0 .4rem; font-size:1rem; }
   .ai-content p { margin:.5rem 0; line-height:1.65; }
   .ai-content ul { margin:.5rem 0; padding:0; list-style:none; }
@@ -72,8 +76,8 @@
     <h1 class="text-headline-lg font-headline-lg text-primary">Alura Agente <span class="text-on-surface-variant font-body-md font-normal opacity-60 px-1">—</span> <span class="text-secondary opacity-80">Mercado Central</span></h1>
   </div>
   <div class="flex items-center gap-4 text-on-surface-variant">
-    <button class="hover:bg-white/50 p-2 rounded-full transition-colors"><span class="material-symbols-outlined">help_outline</span></button>
-    <button class="hover:bg-white/50 p-2 rounded-full transition-colors"><span class="material-symbols-outlined">account_circle</span></button>
+    <button class="hover:bg-white/50 p-2 rounded-full transition-colors" data-nav="soporte"><span class="material-symbols-outlined">help_outline</span></button>
+    <button class="hover:bg-white/50 p-2 rounded-full transition-colors" data-nav="ajustes"><span class="material-symbols-outlined">account_circle</span></button>
   </div>
 </header>
 
@@ -95,43 +99,131 @@
       </button>
     </div>
     <nav class="flex-1 space-y-1 px-4">
-      <a class="bg-white/80 text-primary shadow-sm rounded-full px-5 py-3 flex items-center gap-3" href="#"><span class="material-symbols-outlined">history</span><span class="text-label-lg">Historial</span></a>
-      <a class="text-on-surface-variant hover:bg-white/40 rounded-full px-5 py-3 flex items-center gap-3 transition-colors" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="text-label-lg">Inventario</span></a>
-      <a class="text-on-surface-variant hover:bg-white/40 rounded-full px-5 py-3 flex items-center gap-3 transition-colors" href="#"><span class="material-symbols-outlined">local_shipping</span><span class="text-label-lg">Proveedores</span></a>
-      <a class="text-on-surface-variant hover:bg-white/40 rounded-full px-5 py-3 flex items-center gap-3 transition-colors" href="#"><span class="material-symbols-outlined">settings</span><span class="text-label-lg">Ajustes</span></a>
+      <a class="nav-item nav-link rounded-full px-5 py-3 flex items-center gap-3 transition-colors cursor-pointer" data-nav="chat"><span class="material-symbols-outlined">forum</span><span class="text-label-lg">Consultas</span></a>
+      <a class="nav-item nav-link rounded-full px-5 py-3 flex items-center gap-3 transition-colors cursor-pointer" data-nav="historial"><span class="material-symbols-outlined">history</span><span class="text-label-lg">Historial</span></a>
+      <a class="nav-item nav-link rounded-full px-5 py-3 flex items-center gap-3 transition-colors cursor-pointer" data-nav="inventario"><span class="material-symbols-outlined">inventory_2</span><span class="text-label-lg">Inventario</span></a>
+      <a class="nav-item nav-link rounded-full px-5 py-3 flex items-center gap-3 transition-colors cursor-pointer" data-nav="proveedores"><span class="material-symbols-outlined">local_shipping</span><span class="text-label-lg">Proveedores</span></a>
+      <a class="nav-item nav-link rounded-full px-5 py-3 flex items-center gap-3 transition-colors cursor-pointer" data-nav="ajustes"><span class="material-symbols-outlined">settings</span><span class="text-label-lg">Ajustes</span></a>
     </nav>
     <div class="mt-auto px-4 pb-4">
-      <a class="text-on-surface-variant hover:bg-white/40 rounded-full px-5 py-3 flex items-center gap-3 transition-colors" href="#"><span class="material-symbols-outlined">support_agent</span><span class="text-label-lg">Soporte</span></a>
+      <a class="nav-item nav-link rounded-full px-5 py-3 flex items-center gap-3 transition-colors cursor-pointer" data-nav="soporte"><span class="material-symbols-outlined">support_agent</span><span class="text-label-lg">Soporte</span></a>
     </div>
   </aside>
 
   <!-- Main -->
   <main class="flex-1 md:ml-64 flex flex-col items-center">
     <div class="w-full max-w-4xl px-4 md:px-8 py-8 flex flex-col h-[calc(100vh-68px)]">
-      <!-- Sugerencias -->
-      <div class="mb-6">
-        <div class="flex overflow-x-auto gap-3 pb-2 no-scrollbar" id="sugerencias">
-          <button class="sug whitespace-nowrap px-5 py-2.5 bg-white/70 border border-purple-100 rounded-full text-label-lg text-on-surface-variant hover:bg-white transition-all hover:shadow-sm">¿Cuál es el producto con más stock?</button>
-          <button class="sug whitespace-nowrap px-5 py-2.5 bg-white/70 border border-purple-100 rounded-full text-label-lg text-on-surface-variant hover:bg-white transition-all hover:shadow-sm">¿Cómo funciona la política de devoluciones?</button>
-          <button class="sug whitespace-nowrap px-5 py-2.5 bg-white/70 border border-purple-100 rounded-full text-label-lg text-on-surface-variant hover:bg-white transition-all hover:shadow-sm">¿Qué productos hay de la categoría Abarrotes?</button>
-          <button class="sug whitespace-nowrap px-5 py-2.5 bg-white/70 border border-purple-100 rounded-full text-label-lg text-on-surface-variant hover:bg-white transition-all hover:shadow-sm">¿El supermercado atiende 24 horas?</button>
+
+      <!-- ===== VISTA: CHAT ===== -->
+      <section data-panel="chat" class="flex flex-col flex-1 min-h-0">
+        <div class="mb-6">
+          <div class="flex overflow-x-auto gap-3 pb-2 no-scrollbar" id="sugerencias">
+            <button class="sug whitespace-nowrap px-5 py-2.5 bg-white/70 border border-purple-100 rounded-full text-label-lg text-on-surface-variant hover:bg-white transition-all hover:shadow-sm">¿Cuál es el producto con más stock?</button>
+            <button class="sug whitespace-nowrap px-5 py-2.5 bg-white/70 border border-purple-100 rounded-full text-label-lg text-on-surface-variant hover:bg-white transition-all hover:shadow-sm">¿Cómo funciona la política de devoluciones?</button>
+            <button class="sug whitespace-nowrap px-5 py-2.5 bg-white/70 border border-purple-100 rounded-full text-label-lg text-on-surface-variant hover:bg-white transition-all hover:shadow-sm">¿Qué productos hay de la categoría Abarrotes?</button>
+            <button class="sug whitespace-nowrap px-5 py-2.5 bg-white/70 border border-purple-100 rounded-full text-label-lg text-on-surface-variant hover:bg-white transition-all hover:shadow-sm">¿El supermercado atiende 24 horas?</button>
+          </div>
         </div>
-      </div>
+        <div class="flex-1 chat-container space-y-8 overflow-y-auto mb-6 pr-2" id="chat"></div>
+        <div class="sticky bottom-2 w-full">
+          <div class="bg-white/80 backdrop-blur-md rounded-full shadow-2xl shadow-purple-200/50 border border-purple-100 p-2 flex items-center gap-2">
+            <span class="material-symbols-outlined text-on-surface-variant/60 ml-4">chat_bubble</span>
+            <input id="entrada" autocomplete="off" class="flex-1 bg-transparent border-none focus:ring-0 text-body-lg px-2 text-on-surface placeholder:text-on-surface-variant/40" placeholder="Pregunta sobre políticas, inventario, proveedores..." type="text"/>
+            <button id="enviar" class="gradient-pill text-white px-8 py-3 rounded-full font-label-lg flex items-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100">
+              <span>Consultar</span>
+              <span class="material-symbols-outlined text-sm">send</span>
+            </button>
+          </div>
+        </div>
+      </section>
 
-      <!-- Chat -->
-      <div class="flex-1 chat-container space-y-8 overflow-y-auto mb-6 pr-2" id="chat"></div>
+      <!-- ===== VISTA: HISTORIAL ===== -->
+      <section data-panel="historial" class="hidden flex-1 panel-scroll overflow-y-auto pr-2">
+        <div class="flex items-center gap-3 mb-6 text-primary">
+          <span class="material-symbols-outlined text-3xl">history</span>
+          <h2 class="text-headline-lg font-headline-lg text-on-surface">Historial de consultas</h2>
+        </div>
+        <div id="lista-historial" class="space-y-3"></div>
+      </section>
 
-      <!-- Input -->
-      <div class="sticky bottom-2 w-full">
-        <div class="bg-white/80 backdrop-blur-md rounded-full shadow-2xl shadow-purple-200/50 border border-purple-100 p-2 flex items-center gap-2">
-          <span class="material-symbols-outlined text-on-surface-variant/60 ml-4">chat_bubble</span>
-          <input id="entrada" autocomplete="off" class="flex-1 bg-transparent border-none focus:ring-0 text-body-lg px-2 text-on-surface placeholder:text-on-surface-variant/40" placeholder="Pregunta sobre políticas, inventario, proveedores..." type="text"/>
-          <button id="enviar" class="gradient-pill text-white px-8 py-3 rounded-full font-label-lg flex items-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100">
-            <span>Consultar</span>
-            <span class="material-symbols-outlined text-sm">send</span>
+      <!-- ===== VISTA: INVENTARIO ===== -->
+      <section data-panel="inventario" class="hidden flex-1 panel-scroll overflow-y-auto pr-2">
+        <div class="bg-white/80 border border-purple-50 rounded-[2rem] p-8 shadow-xl shadow-purple-500/5">
+          <div class="flex items-center gap-3 mb-4 text-primary">
+            <span class="material-symbols-outlined text-3xl">inventory_2</span>
+            <h2 class="text-headline-lg font-headline-lg text-on-surface">Inventario</h2>
+          </div>
+          <p class="text-body-lg text-on-surface-variant mb-6">El agente conoce <strong class="text-primary">200 productos</strong> repartidos en 8 categorías: Abarrotes, Bebidas, Lácteos, Carnicería, Carnes Frías, Frutas y Verduras, Limpieza y Cuidado Personal. Pregúntale por stock, precios, marcas o proveedores.</p>
+          <p class="text-label-lg text-on-surface-variant mb-3">Consultas rápidas:</p>
+          <div class="flex flex-wrap gap-3">
+            <button class="chip-pregunta px-5 py-2.5 bg-purple-50 text-primary border border-purple-200 rounded-full text-label-lg hover:shadow-sm transition">¿Cuál es el producto más caro?</button>
+            <button class="chip-pregunta px-5 py-2.5 bg-purple-50 text-primary border border-purple-200 rounded-full text-label-lg hover:shadow-sm transition">¿Qué productos hay de la marca Corona?</button>
+            <button class="chip-pregunta px-5 py-2.5 bg-purple-50 text-primary border border-purple-200 rounded-full text-label-lg hover:shadow-sm transition">¿Cuáles son los productos con menos stock?</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VISTA: PROVEEDORES ===== -->
+      <section data-panel="proveedores" class="hidden flex-1 panel-scroll overflow-y-auto pr-2">
+        <div class="bg-white/80 border border-purple-50 rounded-[2rem] p-8 shadow-xl shadow-purple-500/5">
+          <div class="flex items-center gap-3 mb-4 text-primary">
+            <span class="material-symbols-outlined text-3xl">local_shipping</span>
+            <h2 class="text-headline-lg font-headline-lg text-on-surface">Proveedores</h2>
+          </div>
+          <p class="text-body-lg text-on-surface-variant mb-6">Consulta el <strong class="text-primary">Manual de Proveedores y Política de Compras</strong>: condiciones, evaluación de desempeño, devoluciones y procedimientos de abastecimiento.</p>
+          <p class="text-label-lg text-on-surface-variant mb-3">Consultas rápidas:</p>
+          <div class="flex flex-wrap gap-3">
+            <button class="chip-pregunta px-5 py-2.5 bg-purple-50 text-primary border border-purple-200 rounded-full text-label-lg hover:shadow-sm transition">¿Cómo funciona el manual de proveedores?</button>
+            <button class="chip-pregunta px-5 py-2.5 bg-purple-50 text-primary border border-purple-200 rounded-full text-label-lg hover:shadow-sm transition">¿Qué es la Tasa de Rechazo?</button>
+            <button class="chip-pregunta px-5 py-2.5 bg-purple-50 text-primary border border-purple-200 rounded-full text-label-lg hover:shadow-sm transition">¿Cómo son las devoluciones a proveedores?</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VISTA: AJUSTES ===== -->
+      <section data-panel="ajustes" class="hidden flex-1 panel-scroll overflow-y-auto pr-2">
+        <div class="bg-white/80 border border-purple-50 rounded-[2rem] p-8 shadow-xl shadow-purple-500/5 space-y-6">
+          <div class="flex items-center gap-3 text-primary">
+            <span class="material-symbols-outlined text-3xl">settings</span>
+            <h2 class="text-headline-lg font-headline-lg text-on-surface">Ajustes</h2>
+          </div>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center border-b border-purple-50 pb-3">
+              <span class="text-body-lg text-on-surface-variant">Modelo de lenguaje</span>
+              <span class="text-label-lg text-primary font-bold">Gemini (flash-latest)</span>
+            </div>
+            <div class="flex justify-between items-center border-b border-purple-50 pb-3">
+              <span class="text-body-lg text-on-surface-variant">Embeddings</span>
+              <span class="text-label-lg text-primary font-bold">gemini-embedding-001</span>
+            </div>
+            <div class="flex justify-between items-center border-b border-purple-50 pb-3">
+              <span class="text-body-lg text-on-surface-variant">Documentos indexados</span>
+              <span class="text-label-lg text-primary font-bold">4 PDF + inventario</span>
+            </div>
+          </div>
+          <button id="btn-limpiar" class="gradient-pill text-white px-6 py-3 rounded-full text-label-lg flex items-center gap-2 shadow-md hover:shadow-lg transition">
+            <span class="material-symbols-outlined text-sm">delete_sweep</span> Limpiar historial y chat
           </button>
         </div>
-      </div>
+      </section>
+
+      <!-- ===== VISTA: SOPORTE ===== -->
+      <section data-panel="soporte" class="hidden flex-1 panel-scroll overflow-y-auto pr-2">
+        <div class="bg-white/80 border border-purple-50 rounded-[2rem] p-8 shadow-xl shadow-purple-500/5">
+          <div class="flex items-center gap-3 mb-4 text-primary">
+            <span class="material-symbols-outlined text-3xl">support_agent</span>
+            <h2 class="text-headline-lg font-headline-lg text-on-surface">Soporte</h2>
+          </div>
+          <p class="text-body-lg text-on-surface-variant mb-4">Escribe tu pregunta en lenguaje natural y el agente buscará la respuesta en las políticas, preguntas frecuentes, reglamento interno, manual de proveedores y el inventario.</p>
+          <ul class="space-y-2 text-body-md text-on-surface-variant mb-6" style="list-style:none;padding:0;">
+            <li>💬 Sé específico: "¿Cuál es el plazo de devolución de perecederos?"</li>
+            <li>📊 Para datos, menciona la marca o categoría.</li>
+            <li>🕐 En el plan gratuito, la primera consulta tras un rato puede tardar unos segundos.</li>
+          </ul>
+          <p class="text-label-lg text-on-surface-variant">¿Necesitas ayuda humana? <span class="text-primary font-bold">soporte@mercadocentral24h.com</span></p>
+        </div>
+      </section>
+
     </div>
   </main>
 </div>
@@ -146,14 +238,40 @@
   const chat = document.getElementById('chat');
   const input = document.getElementById('entrada');
   const enviar = document.getElementById('enviar');
+  const historial = [];  // preguntas de esta sesión
 
   function scrollBottom() { chat.scrollTop = chat.scrollHeight; }
+  function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-  function escapeHtml(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // ---- Cambio de vistas ----
+  function mostrarVista(nombre) {
+    document.querySelectorAll('[data-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.panel !== nombre));
+    document.querySelectorAll('.nav-link').forEach(a => {
+      a.classList.toggle('nav-activo', a.dataset.nav === nombre);
+      a.classList.toggle('nav-item', a.dataset.nav !== nombre);
+    });
+    if (nombre === 'historial') renderHistorial();
+    if (nombre === 'chat') input.focus();
   }
 
-  // Renderiza el markdown básico que devuelve el agente (seguro: escapa HTML primero).
+  function renderHistorial() {
+    const cont = document.getElementById('lista-historial');
+    if (!historial.length) {
+      cont.innerHTML = '<div class="bg-white/70 border border-purple-50 rounded-2xl p-6 text-body-lg text-on-surface-variant text-center">Aún no has hecho consultas en esta sesión.</div>';
+      return;
+    }
+    cont.innerHTML = '';
+    [...historial].reverse().forEach(q => {
+      const b = document.createElement('button');
+      b.className = 'w-full text-left bg-white/70 hover:bg-white border border-purple-50 rounded-2xl px-6 py-4 flex items-center gap-3 transition shadow-sm';
+      b.innerHTML = '<span class="material-symbols-outlined text-secondary">chat_bubble</span><span class="text-body-lg text-on-surface"></span>';
+      b.querySelector('span:last-child').textContent = q;
+      b.addEventListener('click', () => { mostrarVista('chat'); preguntar(q); });
+      cont.appendChild(b);
+    });
+  }
+
+  // ---- Markdown seguro ----
   function renderMarkdown(md) {
     const inline = (t) => t
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -173,6 +291,7 @@
     return html;
   }
 
+  // ---- Chat ----
   function burbujaUsuario(texto) {
     const w = document.createElement('div');
     w.className = 'flex justify-end';
@@ -200,6 +319,7 @@
   async function preguntar(texto) {
     texto = (texto || '').trim();
     if (!texto) return;
+    if (historial[historial.length - 1] !== texto) historial.push(texto);
     burbujaUsuario(texto);
     input.value = '';
     enviar.disabled = true;
@@ -215,15 +335,11 @@
       });
       const data = await r.json();
       contenido.innerHTML = renderMarkdown(data.respuesta || 'Sin respuesta.');
-      if (data.fuentes && data.fuentes.length) {
-        fuentesEl.textContent = '📄 Fuentes: ' + data.fuentes.join(', ');
-      }
+      if (data.fuentes && data.fuentes.length) fuentesEl.textContent = '📄 Fuentes: ' + data.fuentes.join(', ');
     } catch (e) {
       contenido.innerHTML = '<p>Ocurrió un error al consultar el agente. Inténtalo de nuevo.</p>';
     } finally {
-      enviar.disabled = false;
-      input.focus();
-      scrollBottom();
+      enviar.disabled = false; input.focus(); scrollBottom();
     }
   }
 
@@ -234,16 +350,17 @@
       'políticas, atención al cliente, proveedores e inventario. Escribe tu pregunta o elige una sugerencia.</p>';
   }
 
-  // Eventos
+  // ---- Eventos ----
   enviar.addEventListener('click', () => preguntar(input.value));
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); preguntar(input.value); } });
-  document.getElementById('sugerencias').addEventListener('click', (e) => {
-    const b = e.target.closest('.sug');
-    if (b) preguntar(b.textContent);
-  });
-  document.getElementById('nueva-consulta').addEventListener('click', () => { chat.innerHTML = ''; bienvenida(); input.focus(); });
+  document.getElementById('sugerencias').addEventListener('click', (e) => { const b = e.target.closest('.sug'); if (b) preguntar(b.textContent); });
+  document.getElementById('nueva-consulta').addEventListener('click', () => { chat.innerHTML = ''; bienvenida(); mostrarVista('chat'); });
+  document.querySelectorAll('[data-nav]').forEach(a => a.addEventListener('click', () => mostrarVista(a.dataset.nav)));
+  document.querySelectorAll('.chip-pregunta').forEach(b => b.addEventListener('click', () => { mostrarVista('chat'); preguntar(b.textContent); }));
+  document.getElementById('btn-limpiar').addEventListener('click', () => { historial.length = 0; chat.innerHTML = ''; bienvenida(); mostrarVista('chat'); });
 
   bienvenida();
+  mostrarVista('chat');
 </script>
 </body>
 </html>
