@@ -193,8 +193,38 @@ secreta en el panel de Render.
 > "duerme"; la primera petición después tarda ~30-50 s en despertar y luego responde
 > con normalidad.
 
-> También se incluye una **guía alternativa de despliegue en Oracle Cloud (OCI)** con
-> nginx y HTTPS en [DEPLOY.md](DEPLOY.md), por si se prefiere esa plataforma.
+### ¿Por qué Render y no Oracle Cloud (OCI)?
+
+El challenge sugiere OCI, y ese fue el objetivo inicial. Sin embargo, nos topamos con
+**limitaciones técnicas reales** en la capa gratuita de OCI que impidieron terminar el
+despliegue ahí:
+
+- **Muy poca memoria en la opción gratuita AMD:** la forma `VM.Standard.E2.1.Micro`
+  ofrece solo **1 GB de RAM**, y de ese GB el kernel reservaba ~448 MB para el
+  *crashkernel*, dejando ~500 MB utilizables. Con tan poca memoria, la instalación de
+  dependencias (`dnf` / `pip`) se quedaba **sin memoria (OOM)** una y otra vez, matando
+  el proceso a mitad de la instalación.
+- **La forma con más RAM no tenía cupo:** `VM.Standard.A1.Flex` (Ampere/ARM, hasta 24 GB
+  gratis) devolvía de forma persistente **"Out of host capacity"** en la región disponible.
+
+Al revisar las aclaraciones oficiales del challenge, confirmamos que **el uso de OCI no
+es obligatorio**: basta con que la aplicación quede accesible mediante una **URL pública**.
+Con eso, elegimos **Render** porque:
+
+- Es **gratuito** y despliega directo desde GitHub.
+- Entrega **URL pública con HTTPS** automáticamente (sin configurar nginx ni certificados).
+- Construye en un entorno con memoria suficiente (**sin los OOM** de la VM de 1 GB).
+
+**Se aplican los mismos principios de despliegue**, solo que gestionados por la plataforma
+en vez de a mano: sigue siendo un **servicio web real, público y sobre HTTPS**; la
+configuración sensible (la clave de Gemini) va en **variables de entorno**; y el despliegue
+es **reproducible como código** mediante [`render.yaml`](render.yaml) — el equivalente
+declarativo de lo que en una VM haríamos con *systemd* + *nginx* (documentado, como
+alternativa completa en OCI, en [DEPLOY.md](DEPLOY.md)).
+
+> Como parte de este proceso también **optimizamos la app para entornos con poca memoria**:
+> cambiamos los *embeddings* de un modelo local (pesado, con onnxruntime) a la **API de
+> embeddings de Gemini**, reduciendo el uso de RAM en ejecución a ~250 MB.
 
 ---
 
