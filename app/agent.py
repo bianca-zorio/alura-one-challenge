@@ -135,16 +135,20 @@ class Agente:
         return f"Herramienta desconocida: {nombre}"
 
     def _generar(self, contents: list, cfg: types.GenerateContentConfig):
-        """Llama a Gemini reintentando si responde 429 (límite de peticiones)."""
-        for intento in range(3):
+        """Llama a Gemini reintentando ante errores transitorios: 429 (límite de
+        peticiones) y 500/503 (modelo saturado del lado de Google)."""
+        for intento in range(4):
             try:
                 return self.cliente.models.generate_content(
                     model=config.GOOGLE_MODEL, contents=contents, config=cfg
                 )
-            except genai_errors.ClientError as e:
-                if e.code != 429 or intento == 2:
+            except genai_errors.APIError as e:
+                codigo = getattr(e, "code", None)
+                if codigo not in (429, 500, 503) or intento == 3:
                     raise
-                time.sleep(_segundos_de_espera(e))
+                # 429 dice cuánto esperar; para 500/503 usamos espera creciente.
+                espera = _segundos_de_espera(e) if codigo == 429 else min(2 ** intento * 2, 20)
+                time.sleep(espera)
 
     def _redactar_final(self, pregunta: str, contexto: list[str], fuentes: set[str]) -> dict:
         """Cierre limpio: sin herramientas ni historial de llamadas, solo la
@@ -167,7 +171,23 @@ class Agente:
         }
 
     def responder(self, pregunta: str) -> dict:
-        """Devuelve {'respuesta': str, 'fuentes': list[str]} para una pregunta."""
+        """Devuelve {'respuesta': str, 'fuentes': list[str]} para una pregunta.
+        Si Gemini falla de forma transitoria (tras los reintentos), responde con
+        un mensaje amable en vez de reventar."""
+        try:
+            return self._responder(pregunta)
+        except genai_errors.APIError as e:
+            codigo = getattr(e, "code", None)
+            if codigo in (429, 500, 503):
+                aviso = (
+                    "El servicio de Gemini está saturado en este momento. "
+                    "Espera unos segundos e inténtalo de nuevo."
+                )
+            else:
+                aviso = "Ocurrió un error al procesar tu pregunta. Inténtalo de nuevo."
+            return {"respuesta": aviso, "fuentes": []}
+
+    def _responder(self, pregunta: str) -> dict:
         fuentes: set[str] = set()
         contexto: list[str] = []  # resultados acumulados de las herramientas
         contents: list = [types.Content(role="user", parts=[types.Part(text=pregunta)])]
