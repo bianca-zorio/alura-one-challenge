@@ -1,105 +1,249 @@
 <!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Alura Agente — Mercado Central 24h</title>
-  <style>
-    :root { --azul:#1a4b8c; --gris:#f4f5f7; --borde:#e0e3e8; }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-           background:var(--gris); color:#1c1e21; }
-    header { background:var(--azul); color:#fff; padding:18px 20px; }
-    header h1 { margin:0; font-size:1.2rem; }
-    header p { margin:4px 0 0; font-size:.85rem; opacity:.85; }
-    main { max-width:720px; margin:0 auto; padding:16px; }
-    #chat { display:flex; flex-direction:column; gap:12px; min-height:52vh; padding:8px 0; }
-    .msg { padding:10px 14px; border-radius:12px; max-width:85%; line-height:1.45;
-           white-space:pre-wrap; word-wrap:break-word; }
-    .user { align-self:flex-end; background:var(--azul); color:#fff; border-bottom-right-radius:2px; }
-    .bot  { align-self:flex-start; background:#fff; border:1px solid var(--borde); border-bottom-left-radius:2px; }
-    .fuentes { font-size:.72rem; color:#65676b; margin-top:6px; }
-    form { display:flex; gap:8px; margin-top:8px; }
-    input { flex:1; padding:12px 14px; border:1px solid var(--borde); border-radius:10px; font-size:1rem; }
-    button { padding:12px 18px; border:0; border-radius:10px; background:var(--azul); color:#fff;
-             font-size:1rem; cursor:pointer; }
-    button:disabled { opacity:.5; cursor:default; }
-    .ejemplos { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
-    .ejemplos button { background:#fff; color:var(--azul); border:1px solid var(--borde);
-                       font-size:.8rem; padding:6px 10px; }
-  </style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Alura Agente — Mercado Central 24h</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "on-surface": "#4a4458",
+          "on-surface-variant": "#7c757e",
+          "primary": "#9333ea",
+          "secondary": "#db2777",
+        },
+        fontFamily: {
+          "headline-md": ["Inter", "sans-serif"],
+          "body-md": ["Inter", "sans-serif"],
+          "headline-lg": ["Playfair Display", "serif"],
+          "label-sm": ["Inter", "sans-serif"],
+          "label-lg": ["Inter", "sans-serif"],
+          "body-lg": ["Inter", "sans-serif"],
+        },
+        fontSize: {
+          "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+          "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+          "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+          "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+          "label-lg": ["14px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+          "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+        },
+      },
+    },
+  }
+</script>
+<style>
+  body { background: linear-gradient(135deg, #fff9f8 0%, #fdf2f8 100%); color: #4a4458; font-family: 'Inter', sans-serif; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .glass-effect { background: rgba(255,255,255,0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.3); }
+  .glass-sidebar { background: rgba(250,245,255,0.5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-right: 1px solid rgba(255,255,255,0.3); }
+  .chat-container::-webkit-scrollbar { width: 4px; }
+  .chat-container::-webkit-scrollbar-thumb { background-color: #f3e8ff; border-radius: 10px; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .gradient-pill { background: linear-gradient(to right, #9333ea, #db2777); transition: opacity .2s; }
+  .gradient-pill:hover { opacity: .9; }
+  .user-bubble { background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%); color: #6b21a8; }
+  /* Render del markdown que devuelve el agente */
+  .ai-content h3 { font-weight:600; color:#9333ea; margin:.9rem 0 .4rem; font-size:1rem; }
+  .ai-content p { margin:.5rem 0; line-height:1.65; }
+  .ai-content ul { margin:.5rem 0; padding:0; list-style:none; }
+  .ai-content li { position:relative; padding-left:1.1rem; margin:.3rem 0; line-height:1.55; }
+  .ai-content li::before { content:'•'; color:#db2777; position:absolute; left:0; top:0; }
+  .ai-content strong { color:#7c3aed; font-weight:600; }
+  .ai-content em { color:#7c757e; }
+  .ai-content code { background:#f3e8ff; padding:0 4px; border-radius:4px; font-size:.85em; }
+  .pensando::after { content:'…'; animation: dots 1.2s steps(4,end) infinite; }
+  @keyframes dots { 0%{opacity:.2} 50%{opacity:1} 100%{opacity:.2} }
+</style>
 </head>
-<body>
-  <header>
-    <h1>🛒 Alura Agente — Mercado Central 24h</h1>
-    <p>Pregunta sobre políticas, inventario, proveedores o atención al cliente.</p>
-  </header>
-  <main>
-    <div class="ejemplos" id="ejemplos">
-      <button>¿Cuál es el producto con más stock?</button>
-      <button>¿Cómo funciona la política de devoluciones?</button>
-      <button>¿Qué productos hay de la categoría Abarrotes?</button>
-      <button>¿El supermercado atiende 24 horas?</button>
+<body class="min-h-screen flex flex-col">
+<!-- Header -->
+<header class="fixed top-0 z-50 w-full glass-effect flex justify-between items-center px-6 py-4">
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 rounded-full gradient-pill flex items-center justify-center text-white shadow-sm">
+      <span class="material-symbols-outlined text-2xl">shopping_cart</span>
     </div>
-    <div id="chat"></div>
-    <form id="form">
-      <input id="entrada" autocomplete="off" placeholder="Escribe tu pregunta..." required />
-      <button id="enviar" type="submit">Enviar</button>
-    </form>
+    <h1 class="text-headline-lg font-headline-lg text-primary">Alura Agente <span class="text-on-surface-variant font-body-md font-normal opacity-60 px-1">—</span> <span class="text-secondary opacity-80">Mercado Central</span></h1>
+  </div>
+  <div class="flex items-center gap-4 text-on-surface-variant">
+    <button class="hover:bg-white/50 p-2 rounded-full transition-colors"><span class="material-symbols-outlined">help_outline</span></button>
+    <button class="hover:bg-white/50 p-2 rounded-full transition-colors"><span class="material-symbols-outlined">account_circle</span></button>
+  </div>
+</header>
+
+<div class="flex flex-1 pt-[68px]">
+  <!-- Sidebar -->
+  <aside class="fixed left-0 top-[68px] h-[calc(100vh-68px)] w-64 glass-sidebar flex-col py-8 hidden md:flex">
+    <div class="px-6 mb-8">
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-full bg-white shadow-sm border border-purple-50 flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined">store</span>
+        </div>
+        <div>
+          <p class="text-label-lg font-bold text-primary">Gestor Central</p>
+          <p class="text-label-sm text-on-surface-variant">Operador de Turno</p>
+        </div>
+      </div>
+      <button id="nueva-consulta" class="w-full gradient-pill text-white text-label-lg py-3 rounded-full flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all">
+        <span class="material-symbols-outlined text-sm">add</span> Nueva Consulta
+      </button>
+    </div>
+    <nav class="flex-1 space-y-1 px-4">
+      <a class="bg-white/80 text-primary shadow-sm rounded-full px-5 py-3 flex items-center gap-3" href="#"><span class="material-symbols-outlined">history</span><span class="text-label-lg">Historial</span></a>
+      <a class="text-on-surface-variant hover:bg-white/40 rounded-full px-5 py-3 flex items-center gap-3 transition-colors" href="#"><span class="material-symbols-outlined">inventory_2</span><span class="text-label-lg">Inventario</span></a>
+      <a class="text-on-surface-variant hover:bg-white/40 rounded-full px-5 py-3 flex items-center gap-3 transition-colors" href="#"><span class="material-symbols-outlined">local_shipping</span><span class="text-label-lg">Proveedores</span></a>
+      <a class="text-on-surface-variant hover:bg-white/40 rounded-full px-5 py-3 flex items-center gap-3 transition-colors" href="#"><span class="material-symbols-outlined">settings</span><span class="text-label-lg">Ajustes</span></a>
+    </nav>
+    <div class="mt-auto px-4 pb-4">
+      <a class="text-on-surface-variant hover:bg-white/40 rounded-full px-5 py-3 flex items-center gap-3 transition-colors" href="#"><span class="material-symbols-outlined">support_agent</span><span class="text-label-lg">Soporte</span></a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 md:ml-64 flex flex-col items-center">
+    <div class="w-full max-w-4xl px-4 md:px-8 py-8 flex flex-col h-[calc(100vh-68px)]">
+      <!-- Sugerencias -->
+      <div class="mb-6">
+        <div class="flex overflow-x-auto gap-3 pb-2 no-scrollbar" id="sugerencias">
+          <button class="sug whitespace-nowrap px-5 py-2.5 bg-white/70 border border-purple-100 rounded-full text-label-lg text-on-surface-variant hover:bg-white transition-all hover:shadow-sm">¿Cuál es el producto con más stock?</button>
+          <button class="sug whitespace-nowrap px-5 py-2.5 bg-white/70 border border-purple-100 rounded-full text-label-lg text-on-surface-variant hover:bg-white transition-all hover:shadow-sm">¿Cómo funciona la política de devoluciones?</button>
+          <button class="sug whitespace-nowrap px-5 py-2.5 bg-white/70 border border-purple-100 rounded-full text-label-lg text-on-surface-variant hover:bg-white transition-all hover:shadow-sm">¿Qué productos hay de la categoría Abarrotes?</button>
+          <button class="sug whitespace-nowrap px-5 py-2.5 bg-white/70 border border-purple-100 rounded-full text-label-lg text-on-surface-variant hover:bg-white transition-all hover:shadow-sm">¿El supermercado atiende 24 horas?</button>
+        </div>
+      </div>
+
+      <!-- Chat -->
+      <div class="flex-1 chat-container space-y-8 overflow-y-auto mb-6 pr-2" id="chat"></div>
+
+      <!-- Input -->
+      <div class="sticky bottom-2 w-full">
+        <div class="bg-white/80 backdrop-blur-md rounded-full shadow-2xl shadow-purple-200/50 border border-purple-100 p-2 flex items-center gap-2">
+          <span class="material-symbols-outlined text-on-surface-variant/60 ml-4">chat_bubble</span>
+          <input id="entrada" autocomplete="off" class="flex-1 bg-transparent border-none focus:ring-0 text-body-lg px-2 text-on-surface placeholder:text-on-surface-variant/40" placeholder="Pregunta sobre políticas, inventario, proveedores..." type="text"/>
+          <button id="enviar" class="gradient-pill text-white px-8 py-3 rounded-full font-label-lg flex items-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100">
+            <span>Consultar</span>
+            <span class="material-symbols-outlined text-sm">send</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </main>
+</div>
 
-  <script>
-    const chat = document.getElementById("chat");
-    const form = document.getElementById("form");
-    const entrada = document.getElementById("entrada");
-    const boton = document.getElementById("enviar");
+<!-- Fondos decorativos -->
+<div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+  <div class="absolute -top-32 -right-32 w-[600px] h-[600px] bg-purple-100/30 rounded-full blur-[120px]"></div>
+  <div class="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-pink-100/30 rounded-full blur-[100px]"></div>
+</div>
 
-    function burbuja(texto, clase, fuentes) {
-      const div = document.createElement("div");
-      div.className = "msg " + clase;
-      div.textContent = texto;
-      if (fuentes && fuentes.length) {
-        const f = document.createElement("div");
-        f.className = "fuentes";
-        f.textContent = "📄 Fuentes: " + fuentes.join(", ");
-        div.appendChild(f);
-      }
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-      return div;
+<script>
+  const chat = document.getElementById('chat');
+  const input = document.getElementById('entrada');
+  const enviar = document.getElementById('enviar');
+
+  function scrollBottom() { chat.scrollTop = chat.scrollHeight; }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // Renderiza el markdown básico que devuelve el agente (seguro: escapa HTML primero).
+  function renderMarkdown(md) {
+    const inline = (t) => t
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*])\*(?!\s)(.+?)\*/g, '$1<em>$2</em>')
+      .replace(/`(.+?)`/g, '<code>$1</code>');
+    const lines = escapeHtml(md).split('\n');
+    let html = '', enLista = false;
+    const cerrar = () => { if (enLista) { html += '</ul>'; enLista = false; } };
+    for (const raw of lines) {
+      const line = raw.replace(/\s+$/, '');
+      if (/^\s*#{2,4}\s+/.test(line)) { cerrar(); html += '<h3>' + inline(line.replace(/^\s*#{2,4}\s+/, '')) + '</h3>'; continue; }
+      if (/^\s*([-*]|\d+\.)\s+/.test(line)) { if (!enLista) { html += '<ul>'; enLista = true; } html += '<li>' + inline(line.replace(/^\s*([-*]|\d+\.)\s+/, '')) + '</li>'; continue; }
+      if (line.trim() === '') { cerrar(); continue; }
+      cerrar(); html += '<p>' + inline(line) + '</p>';
     }
+    cerrar();
+    return html;
+  }
 
-    async function preguntar(texto) {
-      burbuja(texto, "user");
-      entrada.value = "";
-      boton.disabled = true;
-      const pensando = burbuja("Pensando…", "bot");
-      try {
-        const r = await fetch("/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pregunta: texto }),
-        });
-        const data = await r.json();
-        pensando.remove();
-        burbuja(data.respuesta || "Sin respuesta.", "bot", data.fuentes);
-      } catch (e) {
-        pensando.remove();
-        burbuja("Ocurrió un error al consultar el agente.", "bot");
-      } finally {
-        boton.disabled = false;
-        entrada.focus();
+  function burbujaUsuario(texto) {
+    const w = document.createElement('div');
+    w.className = 'flex justify-end';
+    w.innerHTML = '<div class="user-bubble px-6 py-4 rounded-3xl rounded-tr-lg max-w-[80%] shadow-sm border border-white/20"><p class="text-body-lg font-medium"></p></div>';
+    w.querySelector('p').textContent = texto;
+    chat.appendChild(w); scrollBottom();
+  }
+
+  function tarjetaIA() {
+    const w = document.createElement('div');
+    w.className = 'flex justify-start';
+    w.innerHTML =
+      '<div class="bg-white/90 backdrop-blur-sm border border-purple-50 p-6 md:p-8 rounded-[2rem] rounded-tl-lg max-w-[95%] shadow-xl shadow-purple-500/5">' +
+        '<div class="flex items-center gap-3 mb-4">' +
+          '<div class="w-8 h-8 rounded-full gradient-pill flex items-center justify-center text-white"><span class="material-symbols-outlined text-base" style="font-variation-settings:\'FILL\' 1;">smart_toy</span></div>' +
+          '<span class="font-bold text-label-lg text-primary tracking-tight">Alura Agente</span>' +
+        '</div>' +
+        '<div class="ai-content text-body-lg text-on-surface leading-relaxed"></div>' +
+        '<div class="fuentes mt-4 text-label-sm text-on-surface-variant"></div>' +
+      '</div>';
+    chat.appendChild(w); scrollBottom();
+    return w;
+  }
+
+  async function preguntar(texto) {
+    texto = (texto || '').trim();
+    if (!texto) return;
+    burbujaUsuario(texto);
+    input.value = '';
+    enviar.disabled = true;
+    const tarjeta = tarjetaIA();
+    const contenido = tarjeta.querySelector('.ai-content');
+    const fuentesEl = tarjeta.querySelector('.fuentes');
+    contenido.innerHTML = '<span class="pensando text-on-surface-variant">Pensando</span>';
+    try {
+      const r = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pregunta: texto }),
+      });
+      const data = await r.json();
+      contenido.innerHTML = renderMarkdown(data.respuesta || 'Sin respuesta.');
+      if (data.fuentes && data.fuentes.length) {
+        fuentesEl.textContent = '📄 Fuentes: ' + data.fuentes.join(', ');
       }
+    } catch (e) {
+      contenido.innerHTML = '<p>Ocurrió un error al consultar el agente. Inténtalo de nuevo.</p>';
+    } finally {
+      enviar.disabled = false;
+      input.focus();
+      scrollBottom();
     }
+  }
 
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const t = entrada.value.trim();
-      if (t) preguntar(t);
-    });
-    document.getElementById("ejemplos").addEventListener("click", (e) => {
-      if (e.target.tagName === "BUTTON") preguntar(e.target.textContent);
-    });
-  </script>
+  function bienvenida() {
+    const w = tarjetaIA();
+    w.querySelector('.ai-content').innerHTML =
+      '<p>¡Hola! 👋 Soy tu asistente de <strong>Mercado Central 24h</strong>. Puedo responder sobre ' +
+      'políticas, atención al cliente, proveedores e inventario. Escribe tu pregunta o elige una sugerencia.</p>';
+  }
+
+  // Eventos
+  enviar.addEventListener('click', () => preguntar(input.value));
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); preguntar(input.value); } });
+  document.getElementById('sugerencias').addEventListener('click', (e) => {
+    const b = e.target.closest('.sug');
+    if (b) preguntar(b.textContent);
+  });
+  document.getElementById('nueva-consulta').addEventListener('click', () => { chat.innerHTML = ''; bienvenida(); input.focus(); });
+
+  bienvenida();
+</script>
 </body>
 </html>
