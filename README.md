@@ -225,8 +225,7 @@ basta con que la aplicación quede accesible mediante una **URL pública**. Por 
 en vez de a mano: sigue siendo un **servicio web real, público y sobre HTTPS**; la
 configuración sensible (la clave de Gemini) va en **variables de entorno**; y el despliegue
 es **reproducible como código** mediante [`render.yaml`](render.yaml) — el equivalente
-declarativo de lo que en una VM se haría con *systemd* + *nginx* (documentado, como
-alternativa completa en OCI, en [DEPLOY.md](DEPLOY.md)).
+declarativo de lo que en una VM se haría con *systemd* + *nginx*.
 
 > Como parte de este proceso también se **optimizó la app para entornos con poca memoria**:
 > los *embeddings* pasaron de un modelo local (pesado, con onnxruntime) a la **API de
