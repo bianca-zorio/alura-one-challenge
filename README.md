@@ -176,23 +176,25 @@ Abre **http://localhost:8000** y empieza a preguntar. 🎉
 
 ---
 
-## ☁️ Deploy en Oracle Cloud (OCI)
+## ☁️ Deploy (aplicación en vivo)
 
-La aplicación se despliega en una instancia **OCI Compute** (capa *Always Free*),
-con **nginx** como proxy inverso y **HTTPS** gratuito (Let's Encrypt).
+La aplicación está desplegada en **Render** con **HTTPS** automático:
 
-```
-Internet → https://tu-dominio → [nginx en la VM] → [FastAPI en 127.0.0.1:8000]
-```
+### 🔗 **https://alura-one-challenge.onrender.com**
 
-👉 **Guía completa paso a paso:** [DEPLOY.md](DEPLOY.md)
-(crear la VM, abrir puertos, servicio systemd, nginx y certificado HTTPS).
+![Captura del agente en funcionamiento](docs/captura-app.png)
 
-Los archivos de configuración listos para usar están en [`deploy/`](deploy/).
+El despliegue es automático a partir del archivo [`render.yaml`](render.yaml): Render
+instala las dependencias, versionamos el índice ya construido (`data/index/`) para que
+el arranque sea inmediato, y la clave de Gemini se configura como variable de entorno
+secreta en el panel de Render.
 
-**Evidencia del deploy:**
-- 🔗 Enlace público: _(se completará tras el despliegue)_
-- 🖼️ Captura de pantalla: _(se agregará en `docs/`)_
+> **Nota del plan gratuito:** si la app no recibe visitas por ~15 minutos, Render la
+> "duerme"; la primera petición después tarda ~30-50 s en despertar y luego responde
+> con normalidad.
+
+> También se incluye una **guía alternativa de despliegue en Oracle Cloud (OCI)** con
+> nginx y HTTPS en [DEPLOY.md](DEPLOY.md), por si se prefiere esa plataforma.
 
 ---
 
@@ -200,4 +202,5 @@ Los archivos de configuración listos para usar están en [`deploy/`](deploy/).
 - Los documentos usados son de ejemplo, provistos por el challenge, y pueden
   sustituirse por cualquier PDF/CSV colocándolos en `data/documents/` y volviendo
   a ejecutar `python -m app.ingest`.
-- El índice de embeddings (`data/index/`) se genera localmente y no se versiona.
+- El índice de embeddings (`data/index/`) se versiona en el repositorio para que el
+  despliegue no tenga que reconstruirlo.
