@@ -26,7 +26,7 @@ El agente combina dos fuentes de información y decide cuál usar en cada pregun
 ## 🏗️ Arquitectura
 
 El proyecto implementa el patrón **RAG (Retrieval-Augmented Generation)** combinado
-con un **agente de herramientas**: Claude decide, en cada pregunta, qué herramienta
+con un **agente de herramientas**: **Gemini** decide, en cada pregunta, qué herramienta
 usar para fundamentar su respuesta.
 
 ```
@@ -54,19 +54,19 @@ usar para fundamentar su respuesta.
         Respuesta en lenguaje natural + fuentes citadas
                     │
                     ▼
-         FastAPI (API /chat + página web de chat)
+         FastAPI (API /chat + interfaz web)
                     │
                     ▼
-              Deploy en Oracle Cloud (OCI)
+            Deploy en Render (HTTPS público)
 ```
 
 ### ¿Cómo funciona el RAG?
 1. **Ingesta**: los 4 PDF se leen con *PyPDF*, se dividen en fragmentos (~900
-   caracteres con solapamiento) y se convierten en vectores (*embeddings*) con un
-   la API de embeddings de Gemini (multilingüe).
+   caracteres con solapamiento) y se convierten en vectores (*embeddings*) con la
+   API de embeddings de Gemini (multilingüe).
 2. **Búsqueda**: la pregunta se convierte en un vector y se comparan por
    **similitud del coseno** con los fragmentos para recuperar los más relevantes.
-3. **Generación**: Claude recibe esos fragmentos como contexto y redacta la
+3. **Generación**: **Gemini** recibe esos fragmentos como contexto y redacta la
    respuesta, citando la fuente.
 
 Para el **inventario** se usa una herramienta aparte que consulta directamente el
@@ -85,8 +85,9 @@ precisión preguntas de datos como "el producto más caro" o "el de mayor stock"
 | Lectura de Excel | **Pandas + openpyxl** | Consultar el inventario |
 | Embeddings | **Gemini** (`gemini-embedding-001`) | Búsqueda semántica multilingüe vía API (ligero para servidores pequeños) |
 | Búsqueda vectorial | **NumPy** (similitud del coseno) | Ligera, sin dependencias pesadas |
-| Backend / Web | **FastAPI + Uvicorn** | API `/chat` y página de chat |
-| Deploy | **Oracle Cloud Infrastructure (OCI Compute)** | Aplicación pública en la nube |
+| Backend / Web | **FastAPI + Uvicorn** | API `/chat` e interfaz web |
+| Frontend | **HTML + Tailwind CSS** | Interfaz de chat con barra lateral |
+| Deploy | **Render** | Aplicación pública en la nube con HTTPS |
 
 > Usa la **API gratuita** de Google Gemini tanto para el modelo de lenguaje como
 > para los *embeddings*, por lo que el proyecto funciona **sin costo** y es ligero
@@ -104,11 +105,14 @@ alura-one-challenge/
 │   ├── retriever.py     # Búsqueda semántica (RAG)
 │   ├── inventory.py     # Consultas sobre el inventario (Excel)
 │   ├── agent.py         # Agente Gemini con 2 herramientas
-│   ├── main.py          # API FastAPI + página de chat
+│   ├── embeddings.py    # Embeddings con la API de Gemini
+│   ├── main.py          # API FastAPI + sirve la interfaz web
 │   └── templates/
-│       └── index.html   # Interfaz de chat
+│       └── index.html   # Interfaz web (chat + paneles del sidebar)
 ├── data/
-│   └── documents/       # 4 PDF + 1 Excel de Mercado Central 24h
+│   ├── documents/       # 4 PDF + 1 Excel de Mercado Central 24h (fuentes)
+│   └── index/           # Índice de embeddings ya construido (versionado)
+├── render.yaml          # Configuración de despliegue en Render
 ├── requirements.txt
 ├── .env.example
 └── README.md
@@ -140,7 +144,9 @@ cp .env.example .env
 # Edita .env y coloca tu GOOGLE_API_KEY
 ```
 
-### 4. Construir el índice (una sola vez)
+### 4. (Opcional) Reconstruir el índice
+El índice ya viene incluido en el repositorio (`data/index/`), así que puedes
+**saltarte este paso**. Solo hace falta si cambias los documentos de `data/documents/`:
 ```bash
 python -m app.ingest
 ```
@@ -195,8 +201,8 @@ secreta en el panel de Render.
 
 ### ¿Por qué Render y no Oracle Cloud (OCI)?
 
-El challenge sugiere OCI, y ese fue el objetivo inicial. Sin embargo, nos topamos con
-**limitaciones técnicas reales** en la capa gratuita de OCI que impidieron terminar el
+El challenge sugiere OCI, y ese fue el objetivo inicial. Sin embargo, el proyecto se topó
+con **limitaciones técnicas reales** en la capa gratuita de OCI que impidieron terminar el
 despliegue ahí:
 
 - **Muy poca memoria en la opción gratuita AMD:** la forma `VM.Standard.E2.1.Micro`
@@ -207,9 +213,9 @@ despliegue ahí:
 - **La forma con más RAM no tenía cupo:** `VM.Standard.A1.Flex` (Ampere/ARM, hasta 24 GB
   gratis) devolvía de forma persistente **"Out of host capacity"** en la región disponible.
 
-Al revisar las aclaraciones oficiales del challenge, confirmamos que **el uso de OCI no
-es obligatorio**: basta con que la aplicación quede accesible mediante una **URL pública**.
-Con eso, elegimos **Render** porque:
+Las aclaraciones oficiales del challenge confirman que **el uso de OCI no es obligatorio**:
+basta con que la aplicación quede accesible mediante una **URL pública**. Por eso se eligió
+**Render**, porque:
 
 - Es **gratuito** y despliega directo desde GitHub.
 - Entrega **URL pública con HTTPS** automáticamente (sin configurar nginx ni certificados).
@@ -219,18 +225,18 @@ Con eso, elegimos **Render** porque:
 en vez de a mano: sigue siendo un **servicio web real, público y sobre HTTPS**; la
 configuración sensible (la clave de Gemini) va en **variables de entorno**; y el despliegue
 es **reproducible como código** mediante [`render.yaml`](render.yaml) — el equivalente
-declarativo de lo que en una VM haríamos con *systemd* + *nginx* (documentado, como
+declarativo de lo que en una VM se haría con *systemd* + *nginx* (documentado, como
 alternativa completa en OCI, en [DEPLOY.md](DEPLOY.md)).
 
-> Como parte de este proceso también **optimizamos la app para entornos con poca memoria**:
-> cambiamos los *embeddings* de un modelo local (pesado, con onnxruntime) a la **API de
+> Como parte de este proceso también se **optimizó la app para entornos con poca memoria**:
+> los *embeddings* pasaron de un modelo local (pesado, con onnxruntime) a la **API de
 > embeddings de Gemini**, reduciendo el uso de RAM en ejecución a ~250 MB.
 
 ---
 
 ## 📌 Notas
 - Los documentos usados son de ejemplo, provistos por el challenge, y pueden
-  sustituirse por cualquier PDF/CSV colocándolos en `data/documents/` y volviendo
+  sustituirse por cualquier PDF o Excel colocándolos en `data/documents/` y volviendo
   a ejecutar `python -m app.ingest`.
 - El índice de embeddings (`data/index/`) se versiona en el repositorio para que el
   despliegue no tenga que reconstruirlo.
